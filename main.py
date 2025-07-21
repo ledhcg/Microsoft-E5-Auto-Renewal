@@ -7,6 +7,8 @@ from logging import getLogger
 from config import *
 import asyncio
 import hashlib
+import os
+from pathlib import Path
 
 class WebServer:
     instance = Quart(__name__)
@@ -315,6 +317,9 @@ class HTTPClient:
                     pass
             
             TaskManager.finish_task(task_id, True)
+            # Upload log file to OneDrive after successful completion
+            if UPLOAD_LOGS_TO_ONEDRIVE:
+                await cls.upload_log_to_onedrive(access_token)
         except Exception as e:
             TaskManager.finish_task(task_id, False)
             raise
@@ -352,9 +357,51 @@ class HTTPClient:
                     pass
             
             TaskManager.finish_task(task_id, True)
+            # Upload log file to OneDrive after successful completion for this profile
+            if UPLOAD_LOGS_TO_ONEDRIVE:
+                await cls.upload_log_to_onedrive(access_token, profile['name'])
         except Exception as e:
             TaskManager.finish_task(task_id, False)
             raise
+    
+    @classmethod
+    async def upload_log_to_onedrive(cls, access_token: str, profile_name: str = None):
+        """Upload log file to OneDrive after task completion"""
+        try:
+            log_file_path = "event-log.txt"
+            
+            # Check if log file exists
+            if not os.path.exists(log_file_path):
+                return
+            
+            # Generate unique filename with timestamp
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            profile_suffix = f"_{TaskManager._encrypt_profile_name(profile_name)}" if profile_name else ""
+            remote_filename = f"e5-renewal-log_{timestamp}{profile_suffix}.txt"
+            
+            # Read log file content
+            with open(log_file_path, 'rb') as file:
+                file_content = file.read()
+            
+            # Upload to OneDrive using Microsoft Graph API
+            upload_url = f"https://graph.microsoft.com/v1.0/me/drive/root:/logs/{remote_filename}:/content"
+            headers = {
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'text/plain'
+            }
+            
+            response = await cls.instance.put(upload_url, headers=headers, content=file_content)
+            
+            if response.status_code == 201:
+                # Successfully uploaded
+                print(f"Log file uploaded to OneDrive: {remote_filename}")
+            else:
+                print(f"Failed to upload log file: {response.status_code}")
+                
+        except Exception as e:
+            # Don't let upload errors affect main task
+            print(f"Error uploading log to OneDrive: {str(e)}")
 
 web_server = WebServer().instance
 

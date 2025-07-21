@@ -47,6 +47,9 @@ WEB_APP_HOST = env.get("E5_WEB_APP_HOST", "0.0.0.0")
 WEB_APP_PORT = int(env.get("E5_WEB_APP_PORT", 9999))
 TIME_DELAY = int(env.get("E5_TIME_DELAY", 3))
 
+# OneDrive upload configuration
+UPLOAD_LOGS_TO_ONEDRIVE = env.get("E5_UPLOAD_LOGS_TO_ONEDRIVE", "true").lower() == "true"
+
 # WEB SERVER LOGGING CONFIGURATION
 LOGGER_CONFIG_JSON = {
     'version': 1,

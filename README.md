@@ -114,6 +114,8 @@
   * By default `9999`.
 * `TIME_DELAY`|`E5_TIME_DELAY`: Time (in seconds) to wait before calling another endpoint. `int`
   * By default 3 seconds.
+* `UPLOAD_LOGS_TO_ONEDRIVE`|`E5_UPLOAD_LOGS_TO_ONEDRIVE`: Upload log files to OneDrive after task completion. `bool`
+  * By default `true`. Set to `false` to disable OneDrive uploads.
 
 <a name="multi-profile"></a>
 
