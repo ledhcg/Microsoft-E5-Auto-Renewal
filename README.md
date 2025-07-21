@@ -500,7 +500,7 @@ This project includes automated GitHub Actions workflows:
 **File:** `.github/workflows/run-e5-multi-profile.yml`
 
 **Features:**
-- Automatically runs every 2 hours
+- Automatically runs every 4 hours
 - Supports manual trigger
 - Checks profiles.json configuration
 - Runs all profiles simultaneously
