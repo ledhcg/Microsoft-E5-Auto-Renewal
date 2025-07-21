@@ -1,0 +1,18 @@
+{
+  "profiles": [
+    {
+      "name": "user@example.com",
+      "client_id": "your-client-id-here",
+      "client_secret": "your-client-secret-here",
+      "refresh_token": "your-refresh-token-here",
+      "enabled": true
+    },
+    {
+      "name": "another@example.com",
+      "client_id": "your-client-id-here",
+      "client_secret": "your-client-secret-here",
+      "refresh_token": "your-refresh-token-here",
+      "enabled": true
+    }
+  ]
+}
