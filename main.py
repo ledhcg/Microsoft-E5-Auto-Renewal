@@ -6,6 +6,7 @@ from random import shuffle
 from logging import getLogger
 from config import *
 import asyncio
+import hashlib
 
 class WebServer:
     instance = Quart(__name__)
@@ -123,7 +124,10 @@ class RouteHandler:
             
             for profile in PROFILES:
                 task_id = f"{batch_id}-{profile['name']}"
-                task_ids.append(task_id)
+                # Encrypt task_id for response but keep original for internal use
+                encrypted_profile = TaskManager._encrypt_profile_name(profile['name'])
+                encrypted_task_id = f"{batch_id}-{encrypted_profile}"
+                task_ids.append(encrypted_task_id)
                 instance.add_background_task(
                     HTTPClient.call_endpoints_for_profile, 
                     profile, 
@@ -146,8 +150,10 @@ class RouteHandler:
             
             profiles_info = []
             for profile in PROFILES:
+                # Encrypt profile name if it contains email
+                display_name = TaskManager._encrypt_profile_name(profile['name']) if '@' in profile['name'] else profile['name']
                 profiles_info.append({
-                    'name': profile['name'],
+                    'name': display_name,
                     'client_id': profile['client_id'][:8] + '...',  # Hide sensitive info
                     'enabled': profile.get('enabled', True)
                 })
@@ -186,6 +192,15 @@ class TaskManager:
     _max_history = 10
     
     @classmethod
+    def _encrypt_profile_name(cls, profile_name: str) -> str:
+        """Encrypt profile name for privacy"""
+        if '@' in profile_name:
+            # Hash the email to protect privacy
+            hash_obj = hashlib.md5(profile_name.encode())
+            return hash_obj.hexdigest()[:8]
+        return profile_name
+    
+    @classmethod
     def start_task(cls, task_id: str):
         cls._running_tasks += 1
         cls._add_to_history(task_id, 'started')
@@ -211,8 +226,17 @@ class TaskManager:
     @classmethod
     def _add_to_history(cls, task_id: str, status: str):
         from datetime import datetime
+        # Encrypt task_id if it contains profile name with @
+        encrypted_task_id = task_id
+        if '-' in task_id:
+            parts = task_id.split('-', 1)
+            if len(parts) == 2:
+                batch_id, profile_name = parts
+                encrypted_profile = cls._encrypt_profile_name(profile_name)
+                encrypted_task_id = f"{batch_id}-{encrypted_profile}"
+        
         entry = {
-            'task_id': task_id,
+            'task_id': encrypted_task_id,
             'status': status,
             'timestamp': datetime.now().isoformat()
         }
